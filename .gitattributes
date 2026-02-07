@@ -1,0 +1,15 @@
+# Text files
+* text=auto
+
+# Ensure TS/JS are treated as text with LF endings in repo
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Endless Runner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #000;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .ui-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .score-display {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+    }
+
+    .power-up-indicator {
+      position: absolute;
+      top: 60px;
+      left: 20px;
+      font-size: 16px;
+      color: #00ff00;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+    }
+
+    .menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      min-width: 400px;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    }
+
+    .menu h1 {
+      margin-bottom: 30px;
+      color: #00ffff;
+      font-size: 32px;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+
+    .menu-section {
+      margin: 20px 0;
+    }
+
+    .menu-section h3 {
+      margin-bottom: 15px;
+      color: #00ff00;
+      font-size: 18px;
+    }
+
+    .skin-options, .difficulty-options {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .option-btn {
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .option-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+
+    .option-btn.selected {
+      background: linear-gradient(45deg, #00ff00, #00aa00);
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
+    }
+
+    .play-btn {
+      padding: 15px 40px;
+      background: linear-gradient(45deg, #ff0080, #ff00ff);
+      border: none;
+      border-radius: 15px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .play-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      border: 2px solid #ff0000;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+    }
+
+    .game-over h2 {
+      color: #ff0000;
+      font-size: 36px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+    }
+
+    .final-score {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ffff00;
+    }
+
+    .high-score {
+      font-size: 20px;
+      margin-bottom: 30px;
+      color: #00ff00;
+    }
+
+    .restart-btn {
+      padding: 15px 30px;
+      background: linear-gradient(45deg, #00ff00, #00aa00);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+    }
+
+    .restart-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
+    }
+
+    .controls-info {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      text-align: right;
+      font-size: 14px;
+      color: #888;
+      pointer-events: none;
+    }
+
+    .touch-controls {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      pointer-events: all;
+      gap: 20px;
+    }
+
+    .touch-btn {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #00ffff;
+      border-radius: 50%;
+      color: #00ffff;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .touch-btn:active {
+      background: rgba(0, 255, 255, 0.3);
+      transform: scale(0.9);
+    }
+
+    .leaderboard {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #00ff00;
+      pointer-events: all;
+      min-width: 200px;
+    }
+
+    .leaderboard h3 {
+      color: #00ff00;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+     .leaderboard-entry {
+       display: flex;
+       justify-content: space-between;
+       margin: 8px 0;
+       font-size: 14px;
+       color: #ccc;
+       padding: 8px;
+       border-radius: 5px;
+       transition: background 0.2s;
+     }
+
+     .leaderboard-entry:hover {
+       background: rgba(0, 255, 255, 0.1);
+     }
+
+     .leaderboard-entry:nth-child(1) {
+       color: #ffd700; /* Gold */
+       font-weight: bold;
+       background: rgba(255, 215, 0, 0.1);
+     }
+
+     .leaderboard-entry:nth-child(2) {
+       color: #c0c0c0; /* Silver */
+       font-weight: bold;
+       background: rgba(192, 192, 192, 0.1);
+     }
+
+     .leaderboard-entry:nth-child(3) {
+       color: #cd7f32; /* Bronze */
+       font-weight: bold;
+       background: rgba(205, 127, 50, 0.1);
+     }
+
+     .leaderboard-entry span:first-child {
+       flex: 2;
+       text-align: left;
+     }
+
+     .leaderboard-entry span:nth-child(2) {
+       flex: 2;
+       text-align: center;
+     }
+
+     .leaderboard-entry span:last-child {
+       flex: 1;
+       text-align: right;
+       font-size: 12px;
+     }
+
+    .audio-controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      pointer-events: all;
+    }
+
+    .audio-btn {
+      padding: 8px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #00ffff;
+      border-radius: 5px;
+      color: #00ffff;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .audio-btn:hover {
+      background: rgba(0, 255, 255, 0.2);
+    }
+
+    .audio-btn.muted {
+      color: #ff0000;
+      border-color: #ff0000;
+    }
+
+    .pause-menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      min-width: 400px;
+      border: 2px solid #ffff00;
+      box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
+    }
+
+    .pause-menu h2 {
+      color: #ffff00;
+      font-size: 32px;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+    }
+
+    .pause-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .settings-menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      min-width: 500px;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    }
+
+    .settings-menu h2 {
+      color: #00ffff;
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+
+    .setting-group {
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .setting-group label {
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .setting-group input[type="range"] {
+      width: 200px;
+      height: 6px;
+      border-radius: 3px;
+      background: #333;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+     .setting-group input[type="range"]:hover {
+       opacity: 1;
+     }
+
+     .setting-group input[type="checkbox"] {
+       width: 20px;
+       height: 20px;
+       accent-color: #00ffff;
+     }
+
+     .setting-group select {
+       padding: 8px 15px;
+       background: rgba(0, 0, 0, 0.7);
+       border: 1px solid #00ffff;
+       border-radius: 5px;
+       color: #00ffff;
+       font-size: 14px;
+       cursor: pointer;
+       transition: all 0.3s ease;
+     }
+
+     .setting-group select:hover {
+       background: rgba(0, 255, 255, 0.1);
+       border-color: #00ff00;
+     }
+
+     .setting-group select option {
+       background: #000;
+       color: #00ffff;
+     }
+
+     #saveSettingsBtn {
+       background: linear-gradient(45deg, #00ff00, #00aa00);
+     }
+
+     #closeSettingsBtn {
+       background: linear-gradient(45deg, #ff0000, #aa0000);
+     }
+
+     #leaderboardBtn {
+       background: linear-gradient(45deg, #ffd700, #ffcc00);
+     }
+
+    .setting-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .game-over-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .tutorial-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .tutorial-content {
+      background: rgba(0, 50, 100, 0.9);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    }
+
+    .tutorial-content h2 {
+      color: #00ffff;
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+
+    .tutorial-section {
+      margin: 25px 0;
+      text-align: left;
+    }
+
+    .tutorial-section h3 {
+      color: #ffff00;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .tutorial-item {
+      color: #fff;
+      font-size: 16px;
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    .powerup-indicator {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-right: 10px;
+      background: linear-gradient(45deg, #ff0080, #ff00ff);
+      text-shadow: 0 0 5px rgba(255, 0, 255, 0.8);
+    }
+
+    .touch-controls {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      pointer-events: all;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .menu {
+        min-width: 90%;
+        padding: 20px;
+      }
+
+      .touch-controls {
+        display: flex;
+      }
+
+      .controls-info {
+        display: none;
+      }
+
+      .leaderboard {
+        display: none;
+      }
+
+      .settings-menu {
+        min-width: 90%;
+        padding: 20px;
+      }
+
+      .tutorial-content {
+        padding: 20px;
+        max-height: 90vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  
+  <div class="ui-overlay">
+    <div class="score-display">Score: <span id="score">0</span></div>
+    <div class="power-up-indicator" id="powerUpIndicator" style="display: none;"></div>
+    
+    <div class="audio-controls">
+      <button class="audio-btn" id="musicToggle">Music: ON</button>
+      <button class="audio-btn" id="sfxToggle">SFX: ON</button>
+    </div>
+
+    <div class="leaderboard" id="leaderboard" style="display: none;">
+      <h3>High Scores</h3>
+      <div id="leaderboardList"></div>
+    </div>
+    
+    <div class="menu" id="mainMenu">
+      <h1>3D Endless Runner</h1>
+      
+      <div class="menu-section">
+        <h3>Select Cube Skin</h3>
+        <div class="skin-options">
+          <button class="option-btn selected" data-skin="neon">Neon</button>
+          <button class="option-btn" data-skin="fire">Fire</button>
+          <button class="option-btn" data-skin="ice">Ice</button>
+          <button class="option-btn" data-skin="rainbow">Rainbow</button>
+        </div>
+      </div>
+      
+      <div class="menu-section">
+        <h3>Difficulty</h3>
+        <div class="difficulty-options">
+          <button class="option-btn" data-difficulty="easy">Easy</button>
+          <button class="option-btn selected" data-difficulty="medium">Medium</button>
+          <button class="option-btn" data-difficulty="hard">Hard</button>
+        </div>
+      </div>
+      
+      <button class="play-btn" id="playBtn">PLAY</button>
+    </div>
+    
+    <div class="game-over" id="gameOverMenu" style="display: none;">
+      <h2>Game Over!</h2>
+      <div class="final-score">Final Score: <span id="finalScore">0</span></div>
+      <div class="high-score">High Score: <span id="highScore">0</span></div>
+      <div class="game-over-buttons">
+       <button class="option-btn" id="restartBtn">RESTART</button>
+       <button class="option-btn" id="homeBtnGameOver">HOME</button>
+       <button class="option-btn" id="leaderboardBtn">LEADERBOARD</button>
+     </div>
+    </div>
+    
+    <div class="menu pause-menu" id="pauseMenu" style="display: none;">
+      <h2>Game Paused</h2>
+      <div class="pause-buttons">
+        <button class="option-btn" id="resumeBtn">RESUME</button>
+        <button class="option-btn" id="restartBtnPause">RESTART</button>
+        <button class="option-btn" id="homeBtnPause">HOME</button>
+        <button class="option-btn" id="settingsBtnPause">SETTINGS</button>
+      </div>
+    </div>
+    
+    <div class="menu settings-menu" id="settingsMenu" style="display: none;">
+      <h2>Settings</h2>
+
+      <div class="setting-group">
+        <label for="musicVolume">Music Volume</label>
+        <input type="range" id="musicVolume" min="0" max="1" step="0.1" value="0.7">
+        <span id="musicVolumeValue">70%</span>
+      </div>
+
+      <div class="setting-group">
+        <label for="sfxVolume">SFX Volume</label>
+        <input type="range" id="sfxVolume" min="0" max="1" step="0.1" value="0.8">
+        <span id="sfxVolumeValue">80%</span>
+      </div>
+
+      <div class="setting-group">
+        <label>
+          <input type="checkbox" id="musicToggle" checked>
+          Music Enabled
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <label>
+          <input type="checkbox" id="sfxToggle" checked>
+          SFX Enabled
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="skin">Cube Skin</label>
+        <select id="skin">
+          <option value="neon" selected>Neon</option>
+          <option value="fire">Fire</option>
+          <option value="ice">Ice</option>
+          <option value="rainbow">Rainbow</option>
+        </select>
+      </div>
+
+      <div class="setting-buttons">
+        <button class="option-btn" id="saveSettingsBtn">Save Settings</button>
+        <button class="option-btn" id="closeSettingsBtn">Close</button>
+      </div>
+    </div>
+    
+    <div class="tutorial-overlay" id="tutorialOverlay" style="display: none;">
+      <div class="tutorial-content">
+        <h2>How to Play</h2>
+        <div class="tutorial-section">
+          <h3>🎮 Controls</h3>
+          <div class="tutorial-item">
+            <strong>Desktop:</strong> Arrow Keys or WASD to move left/right
+          </div>
+          <div class="tutorial-item">
+            <strong>Mobile:</strong> Use on-screen buttons or swipe
+          </div>
+        </div>
+        
+        <div class="tutorial-section">
+          <h3>🎯 Objective</h3>
+          <div class="tutorial-item">
+            Dodge obstacles and collect power-ups to score points
+          </div>
+          <div class="tutorial-item">
+            Game speed increases over time - how long can you survive?
+          </div>
+        </div>
+        
+        <div class="tutorial-section">
+          <h3>⚡ Power-ups</h3>
+          <div class="tutorial-item">
+            <span class="powerup-indicator">SPEED</span> - Move faster for 3 seconds
+          </div>
+          <div class="tutorial-item">
+            <span class="powerup-indicator">SHIELD</span> - Become invincible for 5 seconds
+          </div>
+          <div class="tutorial-item">
+            <span class="powerup-indicator">2X</span> - Double score multiplier for 10 seconds
+          </div>
+        </div>
+        
+        <div class="tutorial-section">
+          <h3>🎛️ Shortcuts</h3>
+          <div class="tutorial-item">
+            <strong>P:</strong> Pause/Resume game
+          </div>
+          <div class="tutorial-item">
+            <strong>R:</strong> Restart game
+          </div>
+          <div class="tutorial-item">
+            <strong>H:</strong> Return to main menu
+          </div>
+          <div class="tutorial-item">
+            <strong>S:</strong> Open settings
+          </div>
+          <div class="tutorial-item">
+            <strong>T:</strong> Show tutorial
+          </div>
+          <div class="tutorial-item">
+            <strong>ESC:</strong> Pause/Resume game
+          </div>
+        </div>
+        
+        <button class="play-btn" id="closeTutorialBtn">START PLAYING</button>
+      </div>
+    </div>
+    
+    <div class="touch-controls">
+      <button class="touch-btn" id="leftBtn">←</button>
+      <button class="touch-btn" id="rightBtn">→</button>
+      <button class="touch-btn" id="pauseBtn">⏸</button>
+      <button class="touch-btn" id="homeBtn">⌂</button>
+    </div>
+    
+    <div class="controls-info">
+      <div>Controls: WASD or Arrow Keys | P: Pause | H: Home | R: Restart | S: Settings | T: Tutorial</div>
+      <div>Dodge obstacles and collect power-ups!</div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

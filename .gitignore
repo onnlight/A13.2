@@ -1,0 +1,36 @@
+# Node / npm / yarn outputs
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.turbo/
+.vite/
+.log
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.env
+.env.local
+.env.*.local
+.DS_Store
+.vscode/
+.vite-cache/
+.eslintcache
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.metadata/
+.vscode/
+
+# Output and caches
+out/
+dist/
+tmp/
+.cache/
