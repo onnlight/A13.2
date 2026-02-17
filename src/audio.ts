@@ -205,7 +205,6 @@ export class AudioManager {
       );
     }
   }
-  }
 
   private createDefaultSound(data: Float32Array, sampleRate: number): void {
     // Simple beep
@@ -410,13 +409,20 @@ export class AudioManager {
   public setSFXEnabled(enabled: boolean): void {
     this.sfxEnabled = enabled;
     if (!enabled) {
-      // Stop all currently playing SFX
       this.sounds.forEach((audio, name) => {
         if (name !== 'background' && audio.isPlaying) {
           audio.stop();
         }
       });
     }
+  }
+
+  public toggleMusic(enabled: boolean): void {
+    this.setMusicEnabled(enabled);
+  }
+
+  public toggleSfx(enabled: boolean): void {
+    this.setSFXEnabled(enabled);
   }
 
   public isMusicEnabled(): boolean {

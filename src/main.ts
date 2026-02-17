@@ -20,11 +20,11 @@ export type GameState = 'menu' | 'playing' | 'paused' | 'gameover' | 'tutorial' 
 
 export class Game {
   private canvas: HTMLCanvasElement;
-  private scene: GameScene;
-  private player: Player;
-  private obstacleManager: ObstacleManager;
-  private audioManager: AudioManager;
-  private shopUI: ShopUI;
+  private scene!: GameScene;
+  private player!: Player;
+  private obstacleManager!: ObstacleManager;
+  private audioManager!: AudioManager;
+  private shopUI!: ShopUI;
   
   private gameState: GameState;
   private previousGameState: GameState;
@@ -379,11 +379,11 @@ export class Game {
        });
      }
      
-     if (sfxVolumeSlider) {
-       sfxVolumeSlider.addEventListener('input', () => {
-         const volume = parseFloat(sfxVolumeSlider.value);
-         this.sfxVolume = volume;
-         this.audioManager.setSfxVolume(volume);
+      if (sfxVolumeSlider) {
+        sfxVolumeSlider.addEventListener('input', () => {
+          const volume = parseFloat(sfxVolumeSlider.value);
+          this.sfxVolume = volume;
+          this.audioManager.setSFXVolume(volume);
          if (sfxVolumeValue) sfxVolumeValue.textContent = `${Math.round(volume * 100)}%`;
        });
      }
@@ -411,14 +411,14 @@ export class Game {
        });
      }
      
-     if (skinSelect) {
-       skinSelect.addEventListener('change', () => {
-         this.selectedSkin = skinSelect.value as CubeSkin;
-         if (this.player) {
-           this.player.setSkin(this.selectedSkin);
-         }
-       });
-     }
+      if (skinSelect) {
+        skinSelect.addEventListener('change', () => {
+          this.selectedSkin = skinSelect.value as CubeSkin;
+          if (this.player) {
+            this.player.changeSkin(this.selectedSkin);
+          }
+        });
+      }
      
      if (saveSettingsBtn) {
        saveSettingsBtn.addEventListener('click', () => {
@@ -797,15 +797,14 @@ export class Game {
     this.powerUpIndicatorElement.style.display = 'block';
     this.powerUpIndicatorElement.textContent = `${type.toUpperCase()} ACTIVE!`;
     
-    // Hide after appropriate duration
-    const duration = this.getPowerUpDuration(type);
+    const duration = this.getPowerUpDuration(type as PowerUpType);
     setTimeout(() => {
       this.hidePowerUpIndicator();
     }, duration);
   }
 
-  private getPowerUpDuration(type: string): number {
-    const durations = {
+  private getPowerUpDuration(type: PowerUpType): number {
+    const durations: Record<PowerUpType, number> = {
       'speed': 3000,
       'shield': 5000,
       'multiplier': 10000,
@@ -845,17 +844,6 @@ export class Game {
     if (this.player.hasActivePowerUp('slowmotion')) {
       const remaining = Math.ceil(this.player.getRemainingPowerUpTime('slowmotion') / 1000);
       activePowerUps.push(`SLOW-MO ${remaining}s`);
-    }
-    }
-    
-    if (this.player.hasActivePowerUp('shield')) {
-      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('shield') / 1000);
-      activePowerUps.push(`SHIELD ${remaining}s`);
-    }
-    
-    if (this.player.hasActivePowerUp('multiplier')) {
-      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('multiplier') / 1000);
-      activePowerUps.push(`2X ${remaining}s`);
     }
     
     if (activePowerUps.length > 0) {
@@ -905,7 +893,7 @@ export class Game {
     this.audioManager.playSound('gameover');
   }
 
-  private showMenu(): void {
+  public showMenu(): void {
     this.gameState = 'menu';
     this.hideAllMenus();
     this.mainMenuElement.style.display = 'block';
@@ -1197,7 +1185,7 @@ export class Game {
     console.log('Game state saved');
   }
 
-  private loadGameState(): boolean {
+  public loadGameState(): boolean {
     const saved = localStorage.getItem('savedGameState');
     if (!saved) return false;
     
@@ -1210,7 +1198,7 @@ export class Game {
     }
   }
 
-private restoreGameState(): void {
+  public restoreGameState(): void {
     if (!this.savedGameState) return;
     
     // Restore game values
@@ -1368,15 +1356,12 @@ private restoreGameState(): void {
 document.addEventListener('DOMContentLoaded', () => {
   const game = new Game();
   
-  // Check if there's a saved game state
   try {
-    if ((game as any).loadGameState()) {
+    if (game.loadGameState()) {
       console.log('Saved game state found');
-      // Show menu with resume option
-      game.showMenu();
-    } else {
-      game.showMenu();
+      game.restoreGameState();
     }
+    game.showMenu();
   } catch (error) {
     console.error('Error loading saved game state:', error);
     game.showMenu();

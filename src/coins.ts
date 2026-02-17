@@ -24,7 +24,7 @@ export class CoinManager {
     this.scene = scene;
   }
 
-  public update(deltaTime: number, gameSpeed: number, playerPosition?: THREE.Vector3): void {
+  public update(_deltaTime: number, gameSpeed: number, playerPosition?: THREE.Vector3): void {
     // Update coin positions
     this.updateCoins(gameSpeed, playerPosition);
   }

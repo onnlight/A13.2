@@ -373,8 +373,8 @@ export class Player {
     this.mesh.material = newMaterial;
     
     // Update glow color
-    const glowMesh = this.mesh.getObjectByName('glow');
-    if (glowMesh) {
+    const glowMesh = this.mesh.getObjectByName('glow') as THREE.Mesh | null;
+    if (glowMesh && glowMesh.material) {
       (glowMesh.material as THREE.MeshBasicMaterial).color = new THREE.Color(this.getGlowColor());
     }
   }

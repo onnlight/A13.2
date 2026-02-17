@@ -1,20 +1,15 @@
 import { CubeSkin } from './player';
 import { 
-  getCoinBalance, 
-  getOwnedSkins, 
   getSkinPrices, 
   purchaseSkin, 
-  isSkinOwned,
-  ShopData,
-  loadShopData,
-  saveShopData
+  loadShopData
 } from './storage';
 
 export class ShopUI {
-  private shopElement: HTMLElement;
-  private coinBalanceElement: HTMLElement;
-  private skinsContainer: HTMLElement;
-  private closeButton: HTMLElement;
+  private shopElement!: HTMLElement;
+  private coinBalanceElement!: HTMLElement;
+  private skinsContainer!: HTMLElement;
+  private closeButton!: HTMLElement;
   private isOpen: boolean = false;
   
   // Shop data

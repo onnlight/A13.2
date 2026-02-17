@@ -10,7 +10,6 @@ export class GameScene {
   private roadWidth = 10;
   private roadLength = 500;
   private roadSegments: THREE.Mesh[] = [];
-  private currentTheme = 0;
   
   private themes = [
     { primaryColor: 0x00ffff, secondaryColor: 0xff00ff, fogColor: 0x000033 },
@@ -126,9 +125,7 @@ export class GameScene {
       // Left neon line
       const leftLineGeometry = new THREE.PlaneGeometry(0.1, 2);
       const leftLineMaterial = new THREE.MeshBasicMaterial({
-        color: theme.primaryColor,
-        emissive: theme.primaryColor,
-        emissiveIntensity: 1
+        color: theme.primaryColor
       });
       
       const leftLine = new THREE.Mesh(leftLineGeometry, leftLineMaterial);
@@ -146,9 +143,7 @@ export class GameScene {
       if (Math.floor(Math.abs(z) / 4) % 2 === 0) {
         const centerLineGeometry = new THREE.PlaneGeometry(0.05, 1.5);
         const centerLineMaterial = new THREE.MeshBasicMaterial({
-          color: 0xffff00,
-          emissive: 0xffff00,
-          emissiveIntensity: 1
+          color: 0xffff00
         });
         
         const centerLine = new THREE.Mesh(centerLineGeometry, centerLineMaterial);
@@ -232,7 +227,7 @@ export class GameScene {
 
   public updateRoad(speed: number): void {
     // Move road segments
-    this.roadSegments.forEach((segment, index) => {
+    this.roadSegments.forEach((segment) => {
       segment.position.z += speed * 0.1;
       
       // Reset segment when it goes too far
@@ -246,7 +241,6 @@ export class GameScene {
   }
 
   public changeTheme(themeIndex: number): void {
-    this.currentTheme = themeIndex;
     this.applyTheme(themeIndex);
   }
 

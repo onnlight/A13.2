@@ -4,8 +4,8 @@ export interface LeaderboardEntry {
   score: number;
   date: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  skin: 'neon' | 'fire' | 'ice' | 'rainbow';
-  playTime: number; // in seconds
+  skin: 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal';
+  playTime: number;
   obstaclesDodged: number;
   powerUpsCollected: number;
 }
@@ -22,7 +22,7 @@ export interface GameSettings {
   musicEnabled: boolean;
   sfxEnabled: boolean;
   difficulty: 'easy' | 'medium' | 'hard';
-  skin: 'neon' | 'fire' | 'ice' | 'rainbow';
+  skin: 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal';
   version: string;
 }
 
@@ -127,8 +127,8 @@ export function validateLeaderboard(leaderboard: any): leaderboard is Leaderboar
   for (const entry of leaderboard.entries) {
     if (typeof entry.score !== 'number') return false;
     if (typeof entry.date !== 'string') return false;
-    if (!['easy', 'medium', 'hard'].includes(entry.difficulty)) return false;
-    if (!['neon', 'fire', 'ice', 'rainbow'].includes(entry.skin)) return false;
+  if (!['easy', 'medium', 'hard'].includes(entry.difficulty)) return false;
+    if (!['neon', 'fire', 'ice', 'rainbow', 'gold', 'shadow', 'crystal'].includes(entry.skin)) return false;
     if (typeof entry.playTime !== 'number') return false;
     if (typeof entry.obstaclesDodged !== 'number') return false;
     if (typeof entry.powerUpsCollected !== 'number') return false;
@@ -147,7 +147,7 @@ export function validateSettings(settings: any): settings is GameSettings {
   if (typeof settings.musicEnabled !== 'boolean') return false;
   if (typeof settings.sfxEnabled !== 'boolean') return false;
   if (!['easy', 'medium', 'hard'].includes(settings.difficulty)) return false;
-  if (!['neon', 'fire', 'ice', 'rainbow'].includes(settings.skin)) return false;
+  if (!['neon', 'fire', 'ice', 'rainbow', 'gold', 'shadow', 'crystal'].includes(settings.skin)) return false;
   if (typeof settings.version !== 'string') return false;
   
   return true;
@@ -538,7 +538,7 @@ export function migrateSettings(oldSettings: any): GameSettings {
     if (oldSettings.difficulty && ['easy', 'medium', 'hard'].includes(oldSettings.difficulty)) {
       newSettings.difficulty = oldSettings.difficulty;
     }
-    if (oldSettings.skin && ['neon', 'fire', 'ice', 'rainbow'].includes(oldSettings.skin)) {
+    if (oldSettings.skin && ['neon', 'fire', 'ice', 'rainbow', 'gold', 'shadow', 'crystal'].includes(oldSettings.skin)) {
       newSettings.skin = oldSettings.skin;
     }
   }
