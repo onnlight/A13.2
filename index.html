@@ -44,6 +44,17 @@
       pointer-events: none;
     }
 
+    .coin-display {
+      position: absolute;
+      top: 50px;
+      left: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+    }
+
     .power-up-indicator {
       position: absolute;
       top: 60px;
@@ -324,6 +335,187 @@
       border-color: #ff0000;
     }
 
+    .shop-menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      min-width: 600px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    }
+
+    .shop-menu h2 {
+      color: #ffd700;
+      font-size: 32px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+
+    .coin-balance-display {
+      margin-bottom: 30px;
+      padding: 15px;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 10px;
+      border: 1px solid #ffd700;
+    }
+
+    .coin-balance-display h3 {
+      color: #ffd700;
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .skins-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .skin-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .skin-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    .skin-card.owned {
+      border-color: #00ff00;
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    .skin-card.affordable {
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.1);
+    }
+
+    .skin-card.expensive {
+      border-color: #666;
+      background: rgba(100, 100, 100, 0.1);
+      opacity: 0.7;
+    }
+
+    .skin-preview {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 15px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .skin-name {
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .skin-status {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    .skin-status.owned {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .skin-status.free {
+      background: #00ffff;
+      color: #000;
+    }
+
+    .skin-status.affordable {
+      background: #ffd700;
+      color: #000;
+    }
+
+    .skin-status.expensive {
+      background: #666;
+      color: #fff;
+    }
+
+    .skin-action-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .skin-action-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .skin-action-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .shop-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 18px;
+      z-index: 3000;
+      animation: fadeInOut 3s ease-in-out;
+    }
+
+    .shop-message.success {
+      background: linear-gradient(45deg, #00ff00, #00aa00);
+      color: #fff;
+      border: 2px solid #00ff00;
+    }
+
+    .shop-message.error {
+      background: linear-gradient(45deg, #ff0000, #aa0000);
+      color: #fff;
+      border: 2px solid #ff0000;
+    }
+
+    .shop-message.info {
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      color: #fff;
+      border: 2px solid #00ffff;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+
     .pause-menu {
       position: absolute;
       top: 50%;
@@ -565,11 +757,13 @@
   
   <div class="ui-overlay">
     <div class="score-display">Score: <span id="score">0</span></div>
+    <div class="coin-display">Coins: <span id="coinBalance">0</span> 🪙</div>
     <div class="power-up-indicator" id="powerUpIndicator" style="display: none;"></div>
     
     <div class="audio-controls">
       <button class="audio-btn" id="musicToggle">Music: ON</button>
       <button class="audio-btn" id="sfxToggle">SFX: ON</button>
+      <button class="audio-btn" id="shopBtn">SHOP 🪙</button>
     </div>
 
     <div class="leaderboard" id="leaderboard" style="display: none;">
@@ -621,6 +815,20 @@
         <button class="option-btn" id="homeBtnPause">HOME</button>
         <button class="option-btn" id="settingsBtnPause">SETTINGS</button>
       </div>
+    </div>
+    
+    <div class="menu shop-menu" id="shopMenu" style="display: none;">
+      <h2>Skin Shop 🪙</h2>
+      
+      <div class="coin-balance-display">
+        <h3>Your Balance: <span id="shopCoinBalance">0</span> 🪙</h3>
+      </div>
+      
+      <div class="skins-container" id="skinsContainer">
+        <!-- Skins will be dynamically added here -->
+      </div>
+      
+      <button class="option-btn" id="closeShopBtn">CLOSE</button>
     </div>
     
     <div class="menu settings-menu" id="settingsMenu" style="display: none;">
@@ -711,6 +919,25 @@
           <div class="tutorial-item">
             <span class="powerup-indicator">2X</span> - Double score multiplier for 10 seconds
           </div>
+          <div class="tutorial-item">
+            <span class="powerup-indicator">MAGNET</span> - Auto-collect nearby coins for 8 seconds
+          </div>
+          <div class="tutorial-item">
+            <span class="powerup-indicator">SLOW-MO</span> - Reduce game speed by 50% for 6 seconds
+          </div>
+        </div>
+        
+        <div class="tutorial-section">
+          <h3>🪙 Coins & Shop</h3>
+          <div class="tutorial-item">
+            Collect golden coins scattered on the track to earn currency
+          </div>
+          <div class="tutorial-item">
+            Use coins to purchase new player skins in the shop (press S)
+          </div>
+          <div class="tutorial-item">
+            Each skin has unique visual effects and colors
+          </div>
         </div>
         
         <div class="tutorial-section">
@@ -725,7 +952,10 @@
             <strong>H:</strong> Return to main menu
           </div>
           <div class="tutorial-item">
-            <strong>S:</strong> Open settings
+            <strong>S:</strong> Open shop
+          </div>
+          <div class="tutorial-item">
+            <strong>O:</strong> Open settings
           </div>
           <div class="tutorial-item">
             <strong>T:</strong> Show tutorial

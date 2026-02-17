@@ -26,6 +26,19 @@ export interface GameSettings {
   version: string;
 }
 
+export interface ShopData {
+  ownedSkins: ('neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal')[];
+  coinBalance: number;
+  totalCoinsEarned: number;
+  version: string;
+}
+
+export interface SkinPrice {
+  skin: 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal';
+  price: number;
+  owned: boolean;
+}
+
 export interface StorageStats {
   used: number;
   quota: number | null;
@@ -39,6 +52,7 @@ const MAX_LEADERBOARD_ENTRIES = 10;
 const LEADERBOARD_KEY = 'endlessRunnerLeaderboard';
 const SETTINGS_KEY = 'endlessRunnerSettings';
 const HIGH_SCORE_KEY = 'endlessRunnerHighScore';
+const SHOP_KEY = 'endlessRunnerShop';
 
 /**
  * Get storage statistics
@@ -135,6 +149,25 @@ export function validateSettings(settings: any): settings is GameSettings {
   if (!['easy', 'medium', 'hard'].includes(settings.difficulty)) return false;
   if (!['neon', 'fire', 'ice', 'rainbow'].includes(settings.skin)) return false;
   if (typeof settings.version !== 'string') return false;
+  
+  return true;
+}
+
+/**
+ * Validate shop data structure
+ */
+export function validateShopData(shopData: any): shopData is ShopData {
+  if (!shopData || typeof shopData !== 'object') return false;
+  if (!Array.isArray(shopData.ownedSkins)) return false;
+  if (typeof shopData.coinBalance !== 'number') return false;
+  if (typeof shopData.totalCoinsEarned !== 'number') return false;
+  if (typeof shopData.version !== 'string') return false;
+  
+  // Validate owned skins
+  const validSkins = ['neon', 'fire', 'ice', 'rainbow', 'gold', 'shadow', 'crystal'];
+  for (const skin of shopData.ownedSkins) {
+    if (!validSkins.includes(skin)) return false;
+  }
   
   return true;
 }
@@ -309,6 +342,72 @@ export function saveHighScore(score: number): boolean {
 }
 
 /**
+ * Load shop data with error handling and data validation
+ */
+export function loadShopData(): ShopData {
+  if (!isStorageAvailable()) {
+    return createDefaultShopData();
+  }
+  
+  try {
+    const saved = localStorage.getItem(SHOP_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      
+      // Validate and migrate if needed
+      if (validateShopData(parsed)) {
+        // Handle version upgrades
+        if (parsed.version !== STORAGE_VERSION) {
+          return migrateShopData(parsed);
+        }
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load shop data, creating new one:', error);
+  }
+  
+  return createDefaultShopData();
+}
+
+/**
+ * Save shop data with error handling
+ */
+export function saveShopData(shopData: ShopData): boolean {
+  if (!isStorageAvailable()) {
+    return false;
+  }
+  
+  try {
+    // Validate before saving
+    if (!validateShopData(shopData)) {
+      console.error('Invalid shop data, cannot save');
+      return false;
+    }
+    
+    localStorage.setItem(SHOP_KEY, JSON.stringify(shopData));
+    return true;
+  } catch (error) {
+    console.error('Failed to save shop data:', error);
+    
+    // Try to clean up and save again
+    try {
+      const stats = getStorageStats();
+      if (stats.percentage > 90) {
+        console.warn('Storage quota nearly full, attempting cleanup');
+        cleanupStorage();
+        localStorage.setItem(SHOP_KEY, JSON.stringify(shopData));
+        return true;
+      }
+    } catch (cleanupError) {
+      console.error('Cleanup failed:', cleanupError);
+    }
+    
+    return false;
+  }
+}
+
+/**
  * Create default leaderboard
  */
 export function createDefaultLeaderboard(): Leaderboard {
@@ -330,6 +429,18 @@ export function createDefaultSettings(): GameSettings {
     sfxEnabled: true,
     difficulty: 'medium',
     skin: 'neon',
+    version: STORAGE_VERSION
+  };
+}
+
+/**
+ * Create default shop data
+ */
+export function createDefaultShopData(): ShopData {
+  return {
+    ownedSkins: ['neon'], // Neon is free by default
+    coinBalance: 0,
+    totalCoinsEarned: 0,
     version: STORAGE_VERSION
   };
 }
@@ -436,11 +547,36 @@ export function migrateSettings(oldSettings: any): GameSettings {
 }
 
 /**
+ * Migrate old shop data format
+ */
+export function migrateShopData(oldShopData: any): ShopData {
+  console.log('Migrating shop data from old format');
+  
+  const newShopData = createDefaultShopData();
+  
+  if (oldShopData) {
+    if (Array.isArray(oldShopData.ownedSkins)) {
+      newShopData.ownedSkins = oldShopData.ownedSkins.filter((skin: any) => 
+        ['neon', 'fire', 'ice', 'rainbow', 'gold', 'shadow', 'crystal'].includes(skin)
+      );
+    }
+    if (typeof oldShopData.coinBalance === 'number') {
+      newShopData.coinBalance = oldShopData.coinBalance;
+    }
+    if (typeof oldShopData.totalCoinsEarned === 'number') {
+      newShopData.totalCoinsEarned = oldShopData.totalCoinsEarned;
+    }
+  }
+  
+  return newShopData;
+}
+
+/**
  * Clean up old or corrupted storage data
  */
 export function cleanupStorage(): void {
   try {
-    const keysToKeep = [LEADERBOARD_KEY, SETTINGS_KEY, HIGH_SCORE_KEY];
+    const keysToKeep = [LEADERBOARD_KEY, SETTINGS_KEY, HIGH_SCORE_KEY, SHOP_KEY];
     const allKeys: string[] = [];
     
     // Collect all keys
@@ -470,8 +606,93 @@ export function clearAllData(): void {
     localStorage.removeItem(LEADERBOARD_KEY);
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(HIGH_SCORE_KEY);
+    localStorage.removeItem(SHOP_KEY);
     console.log('All game data cleared');
   } catch (error) {
     console.error('Failed to clear game data:', error);
   }
+}
+
+/**
+ * Add coins to player balance
+ */
+export function addCoins(amount: number): boolean {
+  if (amount <= 0) return false;
+  
+  const shopData = loadShopData();
+  shopData.coinBalance += amount;
+  shopData.totalCoinsEarned += amount;
+  
+  return saveShopData(shopData);
+}
+
+/**
+ * Spend coins from player balance
+ */
+export function spendCoins(amount: number): boolean {
+  if (amount <= 0) return false;
+  
+  const shopData = loadShopData();
+  if (shopData.coinBalance < amount) return false;
+  
+  shopData.coinBalance -= amount;
+  return saveShopData(shopData);
+}
+
+/**
+ * Get current coin balance
+ */
+export function getCoinBalance(): number {
+  const shopData = loadShopData();
+  return shopData.coinBalance;
+}
+
+/**
+ * Purchase a skin
+ */
+export function purchaseSkin(skin: 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal', price: number): boolean {
+  const shopData = loadShopData();
+  
+  // Check if already owned
+  if (shopData.ownedSkins.includes(skin)) return false;
+  
+  // Check if enough coins
+  if (shopData.coinBalance < price) return false;
+  
+  // Purchase
+  shopData.coinBalance -= price;
+  shopData.ownedSkins.push(skin);
+  
+  return saveShopData(shopData);
+}
+
+/**
+ * Check if skin is owned
+ */
+export function isSkinOwned(skin: 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal'): boolean {
+  const shopData = loadShopData();
+  return shopData.ownedSkins.includes(skin);
+}
+
+/**
+ * Get all owned skins
+ */
+export function getOwnedSkins(): ('neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal')[] {
+  const shopData = loadShopData();
+  return [...shopData.ownedSkins];
+}
+
+/**
+ * Get skin prices
+ */
+export function getSkinPrices(): Record<string, number> {
+  return {
+    neon: 0,      // Free
+    fire: 100,    // 100 coins
+    ice: 150,     // 150 coins
+    rainbow: 200, // 200 coins
+    gold: 500,    // 500 coins (premium)
+    shadow: 400,  // 400 coins (premium)
+    crystal: 600  // 600 coins (premium)
+  };
 }

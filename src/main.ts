@@ -3,13 +3,16 @@ import { GameScene } from './scene';
 import { Player, CubeSkin, PowerUpType } from './player';
 import { ObstacleManager } from './obstacles';
 import { AudioManager } from './audio';
+import { ShopUI } from './shop';
 import {
   loadSettings as loadStorageSettings,
   saveSettings as saveStorageSettings,
   GameSettings,
   loadLeaderboard,
   addToLeaderboard,
-  LeaderboardEntry
+  LeaderboardEntry,
+  addCoins,
+  getCoinBalance
 } from './storage';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -21,6 +24,7 @@ export class Game {
   private player: Player;
   private obstacleManager: ObstacleManager;
   private audioManager: AudioManager;
+  private shopUI: ShopUI;
   
   private gameState: GameState;
   private previousGameState: GameState;
@@ -54,6 +58,7 @@ export class Game {
   private scoreElement!: HTMLElement;
   private finalScoreElement!: HTMLElement;
   private highScoreElement!: HTMLElement;
+  private coinBalanceElement!: HTMLElement;
   private mainMenuElement!: HTMLElement;
   private gameOverMenuElement!: HTMLElement;
   private powerUpIndicatorElement!: HTMLElement;
@@ -61,6 +66,7 @@ export class Game {
   private pauseMenuElement!: HTMLElement;
   private settingsMenuElement!: HTMLElement;
   private tutorialOverlayElement!: HTMLElement;
+  private shopButtonElement!: HTMLElement;
   
   // Audio
   private musicEnabled: boolean;
@@ -72,6 +78,7 @@ export class Game {
   private gameStartTime: number = 0;
   private obstaclesDodged: number = 0;
   private powerUpsCollected: number = 0;
+  private coinsCollected: number = 0;
   
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
@@ -106,6 +113,9 @@ export class Game {
     this.setupEventListeners();
     this.loadSettings();
     
+    // Initialize shop UI
+    this.shopUI = new ShopUI();
+    
     // Show main menu
     this.showMenu();
   }
@@ -137,6 +147,7 @@ export class Game {
     this.scoreElement = document.getElementById('score')!;
     this.finalScoreElement = document.getElementById('finalScore')!;
     this.highScoreElement = document.getElementById('highScore')!;
+    this.coinBalanceElement = document.getElementById('coinBalance')!;
     this.mainMenuElement = document.getElementById('mainMenu')!;
     this.gameOverMenuElement = document.getElementById('gameOverMenu')!;
     this.powerUpIndicatorElement = document.getElementById('powerUpIndicator')!;
@@ -144,9 +155,11 @@ export class Game {
     this.pauseMenuElement = document.getElementById('pauseMenu')!;
     this.settingsMenuElement = document.getElementById('settingsMenu')!;
     this.tutorialOverlayElement = document.getElementById('tutorialOverlay')!;
+    this.shopButtonElement = document.getElementById('shopBtn')!;
     
-    // Update high score display
+    // Update displays
     this.highScoreElement.textContent = this.highScore.toString();
+    this.updateCoinBalanceDisplay();
     
     // Initialize pause menu (hidden by default)
     if (this.pauseMenuElement) {
@@ -161,6 +174,13 @@ export class Game {
     // Initialize tutorial overlay (hidden by default)
     if (this.tutorialOverlayElement) {
       this.tutorialOverlayElement.style.display = 'none';
+    }
+    
+    // Setup shop button
+    if (this.shopButtonElement) {
+      this.shopButtonElement.addEventListener('click', () => {
+        this.shopUI.open();
+      });
     }
   }
 
@@ -610,6 +630,7 @@ export class Game {
     this.gameStartTime = Date.now();
     this.obstaclesDodged = 0;
     this.powerUpsCollected = 0;
+    this.coinsCollected = 0;
     
     // Reset player
     this.player.reset();
@@ -618,12 +639,14 @@ export class Game {
     // Reset obstacles
     this.obstacleManager.reset();
     this.obstacleManager.setDifficulty(this.difficulty);
+    this.obstacleManager.setMagnetActive(false);
     
     // Hide all menus
     this.hideAllMenus();
     
     // Reset UI
     this.updateScore();
+    this.updateCoinBalanceDisplay();
     this.hidePowerUpIndicator();
     
     // Resume audio context and start background music
@@ -672,8 +695,8 @@ export class Game {
     // Update player
     this.player.update(deltaTime);
     
-    // Update obstacles
-    this.obstacleManager.update(deltaTime, this.gameSpeed);
+    // Update obstacles (pass player position for magnet effect)
+    this.obstacleManager.update(deltaTime, this.gameSpeed, this.player.position);
     
     // Check collisions
     const collisions = this.obstacleManager.checkCollisions(this.player.boundingBox);
@@ -695,6 +718,13 @@ export class Game {
       this.handlePowerUpCollection(collisions.powerUpCollected);
     }
     
+    // Handle coin collection
+    if (collisions.coinsCollected > 0) {
+      // Play coin sound
+      this.audioManager.playSound('coin');
+      this.handleCoinCollection(collisions.coinsCollected);
+    }
+    
     // Update score
     this.scoreTimer += deltaTime;
     if (this.scoreTimer > 100) { // Update score every 100ms
@@ -702,8 +732,12 @@ export class Game {
       this.scoreTimer = 0;
     }
     
+    // Apply slow motion effect if active
+    const slowMotionFactor = this.player.getSlowMotionFactor();
+    const adjustedGameSpeed = this.gameSpeed * slowMotionFactor;
+    
     // Update scene
-    this.scene.updateRoad(this.gameSpeed);
+    this.scene.updateRoad(adjustedGameSpeed);
     this.scene.updateCameraToPlayer(this.player.position);
     
     // Change theme based on score
@@ -720,41 +754,65 @@ export class Game {
     requestAnimationFrame(() => this.gameLoop());
   }
 
-  private handlePowerUpCollection(powerUpType: 'speed' | 'shield' | 'multiplier'): void {
+  private handlePowerUpCollection(powerUpType: 'speed' | 'shield' | 'multiplier' | 'magnet' | 'slowmotion'): void {
     console.log(`Power-up collected: ${powerUpType}`);
-    let duration = 5000; // Default 5 seconds
-    let value = 2; // Default multiplier
     
-    switch (powerUpType) {
-      case 'speed':
-        duration = 3000;
-        value = 1.5;
-        break;
-      case 'shield':
-        duration = 5000;
-        value = 1;
-        console.log('Shield power-up collected - duration: 5000ms');
-        break;
-      case 'multiplier':
-        duration = 10000;
-        value = 2;
-        break;
+    this.player.addPowerUp(powerUpType as PowerUpType);
+    this.showPowerUpIndicator(powerUpType);
+    
+    // Special handling for magnet power-up
+    if (powerUpType === 'magnet') {
+      this.obstacleManager.setMagnetActive(true);
     }
-    
-    this.player.addPowerUp(powerUpType as PowerUpType, duration, value);
-    this.showPowerUpIndicator(powerUpType, duration);
     
     // Play power-up sound effect
     this.audioManager.playSound('powerup');
   }
 
-  private showPowerUpIndicator(type: string, duration: number): void {
+  private handleCoinCollection(amount: number): void {
+    console.log(`Coins collected: ${amount}`);
+    
+    // Add coins to storage
+    addCoins(amount);
+    
+    // Update local counter
+    this.coinsCollected += amount;
+    
+    // Update UI
+    this.updateCoinBalanceDisplay();
+    
+    // Update shop UI if open
+    if (this.shopUI.isOpened()) {
+      this.shopUI.addCoins(amount);
+    }
+  }
+
+  private updateCoinBalanceDisplay(): void {
+    if (this.coinBalanceElement) {
+      this.coinBalanceElement.textContent = getCoinBalance().toString();
+    }
+  }
+
+  private showPowerUpIndicator(type: string): void {
     this.powerUpIndicatorElement.style.display = 'block';
     this.powerUpIndicatorElement.textContent = `${type.toUpperCase()} ACTIVE!`;
     
+    // Hide after appropriate duration
+    const duration = this.getPowerUpDuration(type);
     setTimeout(() => {
       this.hidePowerUpIndicator();
     }, duration);
+  }
+
+  private getPowerUpDuration(type: string): number {
+    const durations = {
+      'speed': 3000,
+      'shield': 5000,
+      'multiplier': 10000,
+      'magnet': 8000,
+      'slowmotion': 6000
+    };
+    return durations[type] || 5000;
   }
 
   private hidePowerUpIndicator(): void {
@@ -767,6 +825,27 @@ export class Game {
     if (this.player.hasActivePowerUp('speed')) {
       const remaining = Math.ceil(this.player.getRemainingPowerUpTime('speed') / 1000);
       activePowerUps.push(`SPEED ${remaining}s`);
+    }
+    
+    if (this.player.hasActivePowerUp('shield')) {
+      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('shield') / 1000);
+      activePowerUps.push(`SHIELD ${remaining}s`);
+    }
+    
+    if (this.player.hasActivePowerUp('multiplier')) {
+      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('multiplier') / 1000);
+      activePowerUps.push(`MULTIPLIER ${remaining}s`);
+    }
+    
+    if (this.player.hasActivePowerUp('magnet')) {
+      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('magnet') / 1000);
+      activePowerUps.push(`MAGNET ${remaining}s`);
+    }
+    
+    if (this.player.hasActivePowerUp('slowmotion')) {
+      const remaining = Math.ceil(this.player.getRemainingPowerUpTime('slowmotion') / 1000);
+      activePowerUps.push(`SLOW-MO ${remaining}s`);
+    }
     }
     
     if (this.player.hasActivePowerUp('shield')) {
@@ -818,6 +897,9 @@ export class Game {
     
     // Save score to leaderboard
     this.saveToLeaderboard();
+    
+    // Refresh shop UI to show updated coin balance
+    this.shopUI.refreshData();
     
     // Play game over sound
     this.audioManager.playSound('gameover');
@@ -1066,6 +1148,14 @@ export class Game {
 
   private saveHighScore(): void {
     localStorage.setItem('highScore', this.highScore.toString());
+  }
+
+  public changeSkin(skin: CubeSkin): void {
+    this.selectedSkin = skin;
+    if (this.player) {
+      this.player.changeSkin(skin);
+    }
+    this.saveSettings();
   }
 
   private saveToLeaderboard(): void {

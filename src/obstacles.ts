@@ -1,7 +1,8 @@
 import * as THREE from 'three';
+import { CoinManager } from './coins';
 
 export type ObstacleType = 'cube' | 'cylinder' | 'pyramid';
-export type PowerUpTypeStr = 'speed' | 'shield' | 'multiplier';
+export type PowerUpTypeStr = 'speed' | 'shield' | 'multiplier' | 'magnet' | 'slowmotion';
 
 export interface GameObject {
   mesh: THREE.Mesh;
@@ -25,12 +26,14 @@ export class ObstacleManager {
   private powerUpSpawnChance: number = 0.1; // 10% chance for power-up
   private obstaclesPassed: number = 0;
   private powerUpsCollected: number = 0;
+  private coinManager: CoinManager;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
+    this.coinManager = new CoinManager(scene);
   }
 
-  public update(deltaTime: number, gameSpeed: number): void {
+  public update(deltaTime: number, gameSpeed: number, playerPosition?: THREE.Vector3): void {
     this.spawnTimer += deltaTime;
 
     // Increase difficulty over time
@@ -47,6 +50,9 @@ export class ObstacleManager {
 
     // Update power-up positions
     this.updatePowerUps(gameSpeed);
+
+    // Update coin positions
+    this.coinManager.update(deltaTime, gameSpeed, playerPosition);
   }
 
   // difficulty adjustment moved to public updateDifficulty below
@@ -59,6 +65,13 @@ export class ObstacleManager {
       this.spawnPowerUp();
     } else {
       this.spawnObstacle();
+    }
+
+    // Chance to spawn coins with obstacles
+    if (Math.random() < this.coinManager.getSpawnChance()) {
+      const lanes = [-3, -1, 1, 3];
+      const lane = lanes[Math.floor(Math.random() * lanes.length)];
+      this.coinManager.spawnCoins(lane);
     }
   }
 
@@ -126,7 +139,7 @@ export class ObstacleManager {
   }
 
   private spawnPowerUp(): void {
-    const types: PowerUpTypeStr[] = ['speed', 'shield', 'multiplier'];
+    const types: PowerUpTypeStr[] = ['speed', 'shield', 'multiplier', 'magnet', 'slowmotion'];
     const type = types[Math.floor(Math.random() * types.length)];
 
     const powerUp = this.createPowerUp(type);
@@ -153,23 +166,38 @@ export class ObstacleManager {
   private createPowerUp(type: PowerUpTypeStr): GameObject {
     let geometry: THREE.BufferGeometry;
     let material: THREE.Material;
+    let glowColor: number;
 
     switch (type) {
       case 'speed':
         geometry = new THREE.SphereGeometry(0.6, 16, 16);
         material = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00 });
+        glowColor = 0xffff00;
         break;
       case 'shield':
         geometry = new THREE.IcosahedronGeometry(0.6, 1);
         material = new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff });
+        glowColor = 0x00ffff;
         break;
       case 'multiplier':
         geometry = new THREE.TorusGeometry(0.4, 0.2, 8, 16);
         material = new THREE.MeshPhongMaterial({ color: 0xff00ff, emissive: 0xff00ff });
+        glowColor = 0xff00ff;
+        break;
+      case 'magnet':
+        geometry = new THREE.OctahedronGeometry(0.6, 0);
+        material = new THREE.MeshPhongMaterial({ color: 0xff0080, emissive: 0xff0080 });
+        glowColor = 0xff0080;
+        break;
+      case 'slowmotion':
+        geometry = new THREE.TetrahedronGeometry(0.6, 0);
+        material = new THREE.MeshPhongMaterial({ color: 0x0080ff, emissive: 0x0080ff });
+        glowColor = 0x0080ff;
         break;
       default:
         geometry = new THREE.SphereGeometry(0.6, 16, 16);
         material = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00 });
+        glowColor = 0xffff00;
     }
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -178,7 +206,7 @@ export class ObstacleManager {
 
     // Glow helper
     const glowGeometry = geometry.clone();
-    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0.25, side: THREE.BackSide });
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: glowColor, transparent: true, opacity: 0.25, side: THREE.BackSide });
     const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
     glowMesh.scale.set(1.2, 1.2, 1.2);
     mesh.add(glowMesh);
@@ -254,6 +282,7 @@ export class ObstacleManager {
   public checkCollisions(playerBox: THREE.Box3): {
     obstacleCollision: boolean;
     powerUpCollected: PowerUpTypeStr | null;
+    coinsCollected: number;
   } {
     let obstacleCollision = false as boolean;
     let powerUpCollected: PowerUpTypeStr | null = null;
@@ -278,7 +307,10 @@ export class ObstacleManager {
       }
     }
 
-    return { obstacleCollision, powerUpCollected } as any;
+    // Check coin collections
+    const coinsCollected = this.coinManager.checkCollisions(playerBox);
+
+    return { obstacleCollision, powerUpCollected, coinsCollected } as any;
   }
 
   public reset(): void {
@@ -300,6 +332,7 @@ export class ObstacleManager {
         (powerUp.mesh.material as THREE.Material).dispose();
       }
     });
+    this.coinManager.reset();
     this.obstacles = [];
     this.powerUps = [];
     this.spawnTimer = 0;
@@ -332,6 +365,10 @@ export class ObstacleManager {
     this.difficulty += 0.001;
     this.currentSpawnRate = Math.max(300, this.baseSpawnRate / this.difficulty);
     this.powerUpSpawnChance = Math.min(0.3, 0.1 + (this.difficulty * 0.01));
+  }
+
+  public setMagnetActive(active: boolean): void {
+    this.coinManager.setMagnetActive(active);
   }
 
   public dispose(): void { this.reset(); }

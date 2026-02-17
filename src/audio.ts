@@ -53,6 +53,9 @@ export class AudioManager {
       case 'collect':
         this.createCollectSound(data, sampleRate);
         break;
+      case 'coin':
+        this.createCoinSound(data, sampleRate);
+        break;
       case 'powerup':
         this.createPowerUpSound(data, sampleRate);
         break;
@@ -65,6 +68,12 @@ export class AudioManager {
       case 'menu':
         this.createMenuSound(data, sampleRate);
         break;
+      case 'purchase':
+        this.createPurchaseSound(data, sampleRate);
+        break;
+      case 'equip':
+        this.createEquipSound(data, sampleRate);
+        break;
       default:
         this.createDefaultSound(data, sampleRate);
     }
@@ -76,10 +85,13 @@ export class AudioManager {
     const durations: { [key: string]: number } = {
       'jump': 0.2,
       'collect': 0.3,
+      'coin': 0.2,
       'powerup': 0.5,
       'collision': 0.4,
       'gameover': 1.0,
-      'menu': 0.1
+      'menu': 0.1,
+      'purchase': 0.4,
+      'equip': 0.3
     };
     return durations[type] || 0.2;
   }
@@ -148,6 +160,51 @@ export class AudioManager {
       const envelope = Math.exp(-t * 50); // Very quick
       data[i] = envelope * (Math.random() - 0.5) * 0.2;
     }
+  }
+
+  private createCoinSound(data: Float32Array, sampleRate: number): void {
+    // Create a sparkling coin sound
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const envelope = Math.exp(-t * 8);
+      // High frequency sparkles
+      data[i] = envelope * (
+        Math.sin(2 * Math.PI * 1200 * t) * 0.2 +
+        Math.sin(2 * Math.PI * 2400 * t) * 0.15 +
+        Math.sin(2 * Math.PI * 3600 * t) * 0.1
+      );
+    }
+  }
+
+  private createPurchaseSound(data: Float32Array, sampleRate: number): void {
+    // Create a satisfying purchase sound
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const envelope = Math.sin(t * Math.PI) * Math.exp(-t * 3);
+      // Ascending chime sequence
+      const frequency1 = 523.25; // C5
+      const frequency2 = 659.25; // E5
+      const frequency3 = 783.99; // G5
+      data[i] = envelope * (
+        Math.sin(2 * Math.PI * frequency1 * t) * 0.3 +
+        Math.sin(2 * Math.PI * frequency2 * t) * 0.2 +
+        Math.sin(2 * Math.PI * frequency3 * t) * 0.1
+      );
+    }
+  }
+
+  private createEquipSound(data: Float32Array, sampleRate: number): void {
+    // Create a quick equip sound
+    for (let i = 0; i < data.length; i++) {
+      const t = i / sampleRate;
+      const envelope = Math.exp(-t * 10);
+      // Quick shimmer
+      data[i] = envelope * (
+        Math.sin(2 * Math.PI * 800 * t) * 0.25 +
+        Math.sin(2 * Math.PI * 1600 * t) * 0.15
+      );
+    }
+  }
   }
 
   private createDefaultSound(data: Float32Array, sampleRate: number): void {

@@ -9,9 +9,16 @@ A modern, feature-rich 3D endless runner game built with TypeScript, Three.js, a
 - **3D Graphics**: Built with Three.js for immersive gameplay
 - **Responsive Design**: Works on desktop and mobile devices
 - **Multiple Difficulty Levels**: Easy, Medium, Hard with adjustable speed
-- **Customizable Skins**: Choose from various player skins
-- **Power-Up System**: Speed boost, shield protection, score multiplier
-- **Persistent Storage**: Save settings and leaderboard progress locally
+- **Customizable Skins**: Choose from various player skins with shop system
+- **Coin Collection**: Collect golden coins to earn currency
+- **Skin Shop**: Purchase new skins using collected coins
+- **Enhanced Power-Up System**: 
+  - Speed boost (3s, 1.5x speed)
+  - Shield protection (5s, invincibility)
+  - Score multiplier (10s, 2x score)
+  - Magnet power-up (8s, auto-collect nearby coins)
+  - Slow-motion (6s, 50% speed reduction)
+- **Persistent Storage**: Save settings, coins, and leaderboard progress locally
 - **Audio System**: Background music and sound effects with volume controls
 - **Touch Controls**: Mobile-friendly swipe gestures
 - **Keyboard Controls**: Arrow keys or WASD for movement
@@ -56,7 +63,8 @@ A modern, feature-rich 3D endless runner game built with TypeScript, Three.js, a
 - **H**: Return to main menu
 - **R**: Restart game
 - **T**: Show tutorial
-- **S**: Open settings
+- **S**: Open shop
+- **O**: Open settings
 
 ### Mobile
 - **Swipe Left**: Move left
@@ -72,9 +80,25 @@ A modern, feature-rich 3D endless runner game built with TypeScript, Three.js, a
 - Glowing visual effects
 
 ### Power-Ups
-- **Speed**: Temporary speed boost (yellow sphere)
-- **Shield**: Temporary invincibility (cyan icosahedron)
-- **Multiplier**: 2x score boost (purple torus)
+- **Speed**: Temporary speed boost (yellow sphere, 3s duration)
+- **Shield**: Temporary invincibility (cyan icosahedron, 5s duration)
+- **Multiplier**: 2x score boost (purple torus, 10s duration)
+- **Magnet**: Auto-collect nearby coins (pink octahedron, 8s duration)
+- **Slow-motion**: Reduce game speed by 50% (blue tetrahedron, 6s duration)
+
+### Coins & Shop System
+- **Golden Coins**: Collectible currency worth 10 coins each
+- **Coin Spawning**: 30% chance per obstacle spawn, 1-3 coins per spawn
+- **Shop Interface**: Purchase new player skins with collected coins
+- **Skin Prices**: 
+  - Neon: Free (default)
+  - Fire: 100 coins
+  - Ice: 150 coins
+  - Rainbow: 200 coins
+  - Shadow: 400 coins (premium)
+  - Gold: 500 coins (premium)
+  - Crystal: 600 coins (premium)
+- **Persistent Balance**: Coins saved between game sessions
 
 ### Scoring
 - Points awarded based on game speed
@@ -118,6 +142,8 @@ npm run test:coverage
 │   ├── scene.ts         # Three.js scene management
 │   ├── player.ts        # Player controls and physics
 │   ├── obstacles.ts     # Obstacle and power-up system
+│   ├── coins.ts         # Coin collection and management
+│   ├── shop.ts          # Shop UI and skin purchasing
 │   ├── audio.ts         # Audio manager and sound effects
 │   └── storage.ts       # LocalStorage utilities
 ├── tests/
@@ -202,6 +228,32 @@ This project uses GitHub Actions for CI/CD:
 
 - Optimized Three.js rendering
 - Efficient collision detection
+- 60 FPS target on modern devices
+- Memory-efficient object pooling
+- Minimal garbage collection impact
+
+## Recent Updates (v1.2)
+
+### New Features Added:
+- **Coin Collection System**: Golden coins spawn on track for collection
+- **Skin Shop System**: Purchase new player skins with collected coins
+- **2 New Power-Ups**: Magnet (auto-collect coins) and Slow-motion (reduce game speed)
+- **3 Premium Skins**: Gold, Shadow, and Crystal skins with unique visual effects
+- **Enhanced Audio**: New coin collection and shop interaction sounds
+- **Improved UI**: Coin balance display and shop interface
+
+### Technical Improvements:
+- Enhanced storage system for coin persistence
+- Improved collision detection for collectibles
+- Better power-up management with duration indicators
+- Expanded test coverage for new systems
+- Updated tutorial and documentation
+
+### Gameplay Balance:
+- Coin spawn rate: 30% chance per obstacle
+- Coin value: 10 coins per collectible
+- Power-up durations balanced for fair gameplay
+- Skin prices provide progression goals
 - Minimal garbage collection
 - Smooth 60 FPS gameplay
 - Responsive design adapts to device

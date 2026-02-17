@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
-export type CubeSkin = 'neon' | 'fire' | 'ice' | 'rainbow';
-export type PowerUpType = 'speed' | 'shield' | 'multiplier';
+export type CubeSkin = 'neon' | 'fire' | 'ice' | 'rainbow' | 'gold' | 'shadow' | 'crystal';
+export type PowerUpType = 'speed' | 'shield' | 'multiplier' | 'magnet' | 'slowmotion';
 
 export interface PowerUp {
   type: PowerUpType;
@@ -107,6 +107,24 @@ export class Player {
         emissive: 0x00ff00,
         emissiveIntensity: 0.4,
         shininess: 120
+      },
+      gold: {
+        color: 0xffd700,
+        emissive: 0xffa500,
+        emissiveIntensity: 0.4,
+        shininess: 200
+      },
+      shadow: {
+        color: 0x2f2f2f,
+        emissive: 0x1a1a1a,
+        emissiveIntensity: 0.5,
+        shininess: 50
+      },
+      crystal: {
+        color: 0xe0ffff,
+        emissive: 0x87ceeb,
+        emissiveIntensity: 0.6,
+        shininess: 250
       }
     };
 
@@ -125,7 +143,10 @@ export class Player {
       neon: 0x00ffff,
       fire: 0xff4500,
       ice: 0x87ceeb,
-      rainbow: 0xff00ff
+      rainbow: 0xff00ff,
+      gold: 0xffd700,
+      shadow: 0x2f2f2f,
+      crystal: 0xe0ffff
     };
     return colors[this.skin];
   }
@@ -223,6 +244,14 @@ export class Player {
         case 'multiplier':
           // Score multiplier is handled in main game loop
           break;
+        case 'magnet':
+          // Magnet effect is handled in obstacle manager
+          console.log('Magnet activated - Attracting nearby coins');
+          break;
+        case 'slowmotion':
+          // Slow motion effect is handled in main game loop
+          console.log('Slow-motion activated - Reducing game speed');
+          break;
       }
     });
     
@@ -231,7 +260,7 @@ export class Player {
       this.moveSpeed = this.baseSpeed;
       this.isShielded = false;
       this.hideShield();
-      console.log('Shield deactivated - Player is vulnerable');
+      console.log('All power-ups deactivated');
     }
   }
 
@@ -266,11 +295,38 @@ export class Player {
   }
 
   public addPowerUp(type: PowerUpType, duration: number = 5000, value: number = 2): void {
+    // Set specific durations and values for different power-ups
+    let finalDuration = duration;
+    let finalValue = value;
+    
+    switch (type) {
+      case 'magnet':
+        finalDuration = 8000; // 8 seconds
+        finalValue = 1;
+        break;
+      case 'slowmotion':
+        finalDuration = 6000; // 6 seconds
+        finalValue = 0.5; // 50% speed reduction
+        break;
+      case 'speed':
+        finalDuration = 3000; // 3 seconds
+        finalValue = 1.5; // 1.5x speed
+        break;
+      case 'shield':
+        finalDuration = 5000; // 5 seconds
+        finalValue = 1;
+        break;
+      case 'multiplier':
+        finalDuration = 10000; // 10 seconds
+        finalValue = 2; // 2x score
+        break;
+    }
+    
     this.powerUps.push({
       type,
       startTime: Date.now(),
-      duration,
-      value
+      duration: finalDuration,
+      value: finalValue
     });
   }
 
@@ -281,6 +337,15 @@ export class Player {
   public getScoreMultiplier(): number {
     const multiplierPowerUp = this.powerUps.find(powerUp => powerUp.type === 'multiplier');
     return multiplierPowerUp ? multiplierPowerUp.value : 1;
+  }
+
+  public hasMagnetActive(): boolean {
+    return this.powerUps.some(powerUp => powerUp.type === 'magnet');
+  }
+
+  public getSlowMotionFactor(): number {
+    const slowMotionPowerUp = this.powerUps.find(powerUp => powerUp.type === 'slowmotion');
+    return slowMotionPowerUp ? slowMotionPowerUp.value : 1;
   }
 
   public getRemainingPowerUpTime(type: PowerUpType): number {
