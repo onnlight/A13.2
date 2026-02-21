@@ -749,6 +749,208 @@
         padding: 20px;
         max-height: 90vh;
       }
+
+      .feedback-modal {
+        min-width: 90%;
+        padding: 20px;
+      }
+    }
+
+    .feedback-modal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      pointer-events: all;
+      min-width: 500px;
+      border: 2px solid #ff6600;
+      box-shadow: 0 0 30px rgba(255, 102, 0, 0.5);
+    }
+
+    .feedback-modal h2 {
+      color: #ff6600;
+      font-size: 28px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
+    }
+
+    .feedback-modal .form-group {
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .feedback-modal label {
+      display: block;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .feedback-modal textarea {
+      width: 100%;
+      height: 120px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ff6600;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+    }
+
+    .feedback-modal textarea:focus {
+      outline: none;
+      border-color: #ff8800;
+      box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+    }
+
+    .feedback-modal input[type="email"],
+    .feedback-modal input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ff6600;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .feedback-modal input:focus {
+      outline: none;
+      border-color: #ff8800;
+    }
+
+    .feedback-modal .char-count {
+      text-align: right;
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .feedback-modal .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feedback-modal .checkbox-group input {
+      width: auto;
+    }
+
+    .feedback-modal .feedback-options {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .feedback-modal .feedback-type-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ff6600;
+      border-radius: 20px;
+      color: #ff6600;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .feedback-modal .feedback-type-btn:hover,
+    .feedback-modal .feedback-type-btn.selected {
+      background: #ff6600;
+      color: #fff;
+    }
+
+    .feedback-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 25px;
+    }
+
+    .feedback-buttons .option-btn {
+      background: linear-gradient(45deg, #ff6600, #ff8800);
+    }
+
+    .feedback-buttons .option-btn:hover {
+      box-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
+    }
+
+    .github-link-btn {
+      background: linear-gradient(45deg, #333, #555) !important;
+      border: 1px solid #fff !important;
+    }
+
+    .github-link-btn:hover {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 16px;
+      z-index: 5000;
+      animation: toastFadeInOut 3s ease-in-out;
+    }
+
+    .toast.success {
+      background: linear-gradient(45deg, #00ff00, #00aa00);
+      color: #fff;
+      border: 2px solid #00ff00;
+    }
+
+    .toast.info {
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      color: #fff;
+      border: 2px solid #00ffff;
+    }
+
+    @keyframes toastFadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    }
+
+    .menu-footer {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .menu-footer-link {
+      color: #888;
+      font-size: 12px;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .menu-footer-link:hover {
+      color: #00ffff;
+    }
+
+    .settings-about-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+    }
+
+    .settings-about-section h3 {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -794,6 +996,10 @@
       </div>
       
       <button class="play-btn" id="playBtn">PLAY</button>
+      
+      <div class="menu-footer">
+        <a href="#" class="menu-footer-link" id="feedbackBtn">Feedback / Suggestions</a>
+      </div>
     </div>
     
     <div class="game-over" id="gameOverMenu" style="display: none;">
@@ -882,6 +1088,48 @@
       <div class="setting-buttons">
         <button class="option-btn" id="saveSettingsBtn">Save Settings</button>
         <button class="option-btn" id="closeSettingsBtn">Close</button>
+      </div>
+
+      <div class="settings-about-section">
+        <h3>Connect With Us</h3>
+        <button class="option-btn github-link-btn" id="githubIssuesBtn">🐛 Report Bug / Feature Request</button>
+        <p style="margin-top: 10px; color: #666; font-size: 11px;">Opens GitHub Issues</p>
+      </div>
+    </div>
+    
+    <div class="feedback-modal" id="feedbackModal" style="display: none;">
+      <h2>Feedback / Suggestions</h2>
+      
+      <div class="form-group">
+        <label>What would you like to share?</label>
+        <div class="feedback-options">
+          <button class="feedback-type-btn selected" data-type="suggestion">💡 Suggestion</button>
+          <button class="feedback-type-btn" data-type="bug">🐛 Bug Report</button>
+          <button class="feedback-type-btn" data-type="idea">🎨 New Feature</button>
+          <button class="feedback-type-btn" data-type="other">💬 Other</button>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="feedbackMessage">Your Feedback</label>
+        <textarea id="feedbackMessage" maxlength="1000" placeholder="Share your thoughts, report an issue, or suggest an improvement..."></textarea>
+        <div class="char-count"><span id="feedbackCharCount">0</span>/1000</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="feedbackEmail">Email (optional, for follow-up)</label>
+        <input type="email" id="feedbackEmail" placeholder="your@email.com">
+      </div>
+      
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="includeGameState" checked>
+        <label for="includeGameState">Include current game stats (score, coins, difficulty, skin)</label>
+      </div>
+      
+      <div class="feedback-buttons">
+        <button class="option-btn" id="submitFeedbackBtn">📋 Copy to Clipboard</button>
+        <button class="option-btn" id="openGithubBtn">🐙 Open GitHub</button>
+        <button class="option-btn" id="closeFeedbackBtn" style="background: linear-gradient(45deg, #666, #888);">Close</button>
       </div>
     </div>
     
@@ -977,7 +1225,7 @@
     </div>
     
     <div class="controls-info">
-      <div>Controls: WASD or Arrow Keys | P: Pause | H: Home | R: Restart | S: Settings | T: Tutorial</div>
+      <div>Controls: WASD or Arrow Keys | P: Pause | H: Home | R: Restart | S: Settings | T: Tutorial | F: Feedback</div>
       <div>Dodge obstacles and collect power-ups!</div>
     </div>
   </div>

@@ -435,15 +435,213 @@ export class Game {
        });
      }
      
-     if (leaderboardBtn) {
-       leaderboardBtn.addEventListener('click', () => {
-         this.audioManager.playSound('menu');
-         this.toggleLeaderboard();
-       });
-     }
-   }
+      if (leaderboardBtn) {
+        leaderboardBtn.addEventListener('click', () => {
+          this.audioManager.playSound('menu');
+          this.toggleLeaderboard();
+        });
+      }
 
-   private handleKeyDown(e: KeyboardEvent): void {
+      this.setupFeedbackModal();
+      this.setupGitHubLinks();
+    }
+
+    private setupFeedbackModal(): void {
+      const feedbackBtn = document.getElementById('feedbackBtn');
+      const feedbackModal = document.getElementById('feedbackModal');
+      const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+      const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+      const openGithubBtn = document.getElementById('openGithubBtn');
+      const feedbackMessage = document.getElementById('feedbackMessage') as HTMLTextAreaElement;
+      const feedbackCharCount = document.getElementById('feedbackCharCount');
+      const feedbackTypeBtns = document.querySelectorAll('.feedback-type-btn');
+
+      let selectedFeedbackType = 'suggestion';
+
+      feedbackTypeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          feedbackTypeBtns.forEach(b => b.classList.remove('selected'));
+          (e.target as HTMLElement).classList.add('selected');
+          selectedFeedbackType = (e.target as HTMLElement).dataset.type || 'suggestion';
+        });
+      });
+
+      if (feedbackMessage && feedbackCharCount) {
+        feedbackMessage.addEventListener('input', () => {
+          feedbackCharCount.textContent = feedbackMessage.value.length.toString();
+        });
+      }
+
+      if (feedbackBtn && feedbackModal) {
+        feedbackBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.audioManager.playSound('menu');
+          this.hideAllMenus();
+          feedbackModal.style.display = 'block';
+          this.gameState = 'settings';
+        });
+      }
+
+      if (closeFeedbackBtn && feedbackModal) {
+        closeFeedbackBtn.addEventListener('click', () => {
+          this.audioManager.playSound('menu');
+          feedbackModal.style.display = 'none';
+          this.showMenu();
+        });
+      }
+
+      if (submitFeedbackBtn) {
+        submitFeedbackBtn.addEventListener('click', () => {
+          this.submitFeedback(selectedFeedbackType);
+        });
+      }
+
+      if (openGithubBtn) {
+        openGithubBtn.addEventListener('click', () => {
+          this.openGitHubIssues(selectedFeedbackType);
+        });
+      }
+    }
+
+    private submitFeedback(type: string): void {
+      const feedbackMessage = document.getElementById('feedbackMessage') as HTMLTextAreaElement;
+      const feedbackEmail = document.getElementById('feedbackEmail') as HTMLInputElement;
+      const includeGameState = (document.getElementById('includeGameState') as HTMLInputElement).checked;
+
+      if (!feedbackMessage || !feedbackMessage.value.trim()) {
+        this.showToast('Please enter your feedback', 'info');
+        return;
+      }
+
+      const feedbackTypeLabels: Record<string, string> = {
+        'suggestion': '💡 Suggestion',
+        'bug': '🐛 Bug Report',
+        'idea': '🎨 New Feature Request',
+        'other': '💬 Other'
+      };
+
+      let gameStateInfo = '';
+      if (includeGameState) {
+        gameStateInfo = `
+---
+### Game State Info:
+- **Current Score**: ${this.score}
+- **High Score**: ${this.highScore}
+- **Coins**: ${getCoinBalance()}
+- **Difficulty**: ${this.difficulty}
+- **Skin**: ${this.selectedSkin}
+- **Game State**: ${this.gameState}
+- **User Agent**: ${navigator.userAgent}
+`;
+      }
+
+      const emailInfo = feedbackEmail.value.trim() ? `\n- **Contact Email**: ${feedbackEmail.value.trim()}` : '';
+
+      const formattedMessage = `### ${feedbackTypeLabels[type] || 'Feedback'}
+
+${feedbackMessage.value.trim()}
+
+${gameStateInfo}
+- **Feedback Type**: ${feedbackTypeLabels[type] || type}${emailInfo}
+- **Submitted via**: In-Game Feedback Form
+`;
+
+      navigator.clipboard.writeText(formattedMessage).then(() => {
+        this.showToast('Feedback copied to clipboard! Paste it in GitHub Issues or Discussions', 'success');
+        this.trackFeedbackSubmission();
+        
+        const feedbackModal = document.getElementById('feedbackModal');
+        if (feedbackModal) {
+          feedbackModal.style.display = 'none';
+        }
+        
+        if (feedbackMessage) feedbackMessage.value = '';
+        if (feedbackEmail) feedbackEmail.value = '';
+        
+        this.showMenu();
+      }).catch(() => {
+        this.showToast('Failed to copy to clipboard', 'info');
+      });
+    }
+
+    private openGitHubIssues(type: string): void {
+      const feedbackMessage = document.getElementById('feedbackMessage') as HTMLTextAreaElement;
+      
+      let issueTitle = '';
+      let issueBody = '';
+      
+      switch(type) {
+        case 'bug':
+          issueTitle = '[Bug] ';
+          issueBody = '**Bug Description:**\n\n**Steps to Reproduce:**\n1. \n2. \n3. \n\n**Expected Behavior:**\n\n**Actual Behavior:**\n';
+          break;
+        case 'idea':
+          issueTitle = '[Feature Request] ';
+          issueBody = '**Feature Description:**\n\n**Why this would be useful:**\n\n**Proposed Solution:**\n';
+          break;
+        default:
+          issueTitle = '[Suggestion] ';
+          issueBody = '**Suggestion:**\n\n**Reason:**\n';
+      }
+
+      if (feedbackMessage && feedbackMessage.value.trim()) {
+        issueBody += `\n\n---\n${feedbackMessage.value.trim()}`;
+      }
+
+      const url = `https://github.com/onnlight/A13.2/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+      window.open(url, '_blank');
+      
+      this.trackFeedbackSubmission();
+      
+      const feedbackModal = document.getElementById('feedbackModal');
+      if (feedbackModal) {
+        feedbackModal.style.display = 'none';
+      }
+      this.showMenu();
+    }
+
+    private trackFeedbackSubmission(): void {
+      const count = parseInt(localStorage.getItem('feedbackCount') || '0');
+      localStorage.setItem('feedbackCount', (count + 1).toString());
+    }
+
+    private setupGitHubLinks(): void {
+      const githubIssuesBtn = document.getElementById('githubIssuesBtn');
+      
+      if (githubIssuesBtn) {
+        githubIssuesBtn.addEventListener('click', () => {
+          this.audioManager.playSound('menu');
+          window.open('https://github.com/onnlight/A13.2/issues', '_blank');
+        });
+      }
+    }
+
+    private showToast(message: string, type: 'success' | 'info' = 'success'): void {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    private showFeedback(): void {
+      const feedbackModal = document.getElementById('feedbackModal');
+      if (feedbackModal) {
+        this.hideAllMenus();
+        feedbackModal.style.display = 'block';
+        this.gameState = 'settings';
+      }
+    }
+
+    private handleKeyDown(e: KeyboardEvent): void {
     // Handle global shortcuts first
     if (e.key === 'Escape' || e.key === 'ESC') {
       if (this.gameState === 'playing') {
@@ -485,6 +683,11 @@ export class Game {
     
     if (e.key === 's' || e.key === 'S') {
       this.showSettings();
+      return;
+    }
+    
+    if (e.key === 'f' || e.key === 'F') {
+      this.showFeedback();
       return;
     }
     
@@ -1049,14 +1252,19 @@ export class Game {
      });
    }
   
-   private hideAllMenus(): void {
-    this.mainMenuElement.style.display = 'none';
-    this.gameOverMenuElement.style.display = 'none';
-    this.pauseMenuElement.style.display = 'none';
-    this.settingsMenuElement.style.display = 'none';
-    this.tutorialOverlayElement.style.display = 'none';
-    this.leaderboardElement.style.display = 'none';
-  }
+    private hideAllMenus(): void {
+     this.mainMenuElement.style.display = 'none';
+     this.gameOverMenuElement.style.display = 'none';
+     this.pauseMenuElement.style.display = 'none';
+     this.settingsMenuElement.style.display = 'none';
+     this.tutorialOverlayElement.style.display = 'none';
+     this.leaderboardElement.style.display = 'none';
+     
+     const feedbackModal = document.getElementById('feedbackModal');
+     if (feedbackModal) {
+       feedbackModal.style.display = 'none';
+     }
+   }
 
   private updateLeaderboard(): void {
     const scores = this.getLeaderboard();
