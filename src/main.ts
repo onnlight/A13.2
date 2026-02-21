@@ -642,6 +642,17 @@ ${gameStateInfo}
     }
 
     private handleKeyDown(e: KeyboardEvent): void {
+    const feedbackModal = document.getElementById('feedbackModal');
+    const isFeedbackOpen = feedbackModal && feedbackModal.style.display === 'block';
+    
+    if (isFeedbackOpen) {
+      if (e.key === 'Escape') {
+        feedbackModal.style.display = 'none';
+        this.showMenu();
+      }
+      return;
+    }
+    
     // Handle global shortcuts first
     if (e.key === 'Escape' || e.key === 'ESC') {
       if (this.gameState === 'playing') {

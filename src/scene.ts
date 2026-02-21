@@ -12,10 +12,62 @@ export class GameScene {
   private roadSegments: THREE.Mesh[] = [];
   
   private themes = [
-    { primaryColor: 0x00ffff, secondaryColor: 0xff00ff, fogColor: 0x000033 },
-    { primaryColor: 0xff0080, secondaryColor: 0x80ff00, fogColor: 0x330011 },
-    { primaryColor: 0xffff00, secondaryColor: 0x00ffff, fogColor: 0x111133 },
-    { primaryColor: 0xff8000, secondaryColor: 0x00ff80, fogColor: 0x331100 },
+    { 
+      name: 'Neon Night',
+      primaryColor: 0x00ffff, 
+      secondaryColor: 0xff00ff, 
+      fogColor: 0x000033,
+      skyColor: 0x000011
+    },
+    { 
+      name: 'Cyber Sunset',
+      primaryColor: 0xff0080, 
+      secondaryColor: 0x80ff00, 
+      fogColor: 0x330011,
+      skyColor: 0x220008
+    },
+    { 
+      name: 'Electric Gold',
+      primaryColor: 0xffff00, 
+      secondaryColor: 0x00ffff, 
+      fogColor: 0x111133,
+      skyColor: 0x0a0a20
+    },
+    { 
+      name: 'Magma Core',
+      primaryColor: 0xff8000, 
+      secondaryColor: 0x00ff80, 
+      fogColor: 0x331100,
+      skyColor: 0x1a0500
+    },
+    { 
+      name: 'Arctic Frost',
+      primaryColor: 0xaaddff, 
+      secondaryColor: 0xffeeff, 
+      fogColor: 0x88aacc,
+      skyColor: 0x445566
+    },
+    { 
+      name: 'Toxic Glow',
+      primaryColor: 0x00ff66, 
+      secondaryColor: 0xff00ff, 
+      fogColor: 0x003311,
+      skyColor: 0x001a08
+    },
+    { 
+      name: 'Royal Velvet',
+      primaryColor: 0x9900ff, 
+      secondaryColor: 0xffd700, 
+      fogColor: 0x1a0033,
+      skyColor: 0x0d001a
+    },
+    { 
+      name: 'Ocean Depths',
+      primaryColor: 0x0066ff, 
+      secondaryColor: 0x00ffcc, 
+      fogColor: 0x001133,
+      skyColor: 0x000a1a
+    },
   ];
 
   constructor(canvas: HTMLCanvasElement) {
@@ -41,7 +93,7 @@ export class GameScene {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.setClearColor(0x000000);
+    this.renderer.setClearColor(0x000011);
     
     // Initialize road group
     this.road = new THREE.Group();
@@ -90,6 +142,9 @@ export class GameScene {
     
     // Update fog
     this.scene.fog = new THREE.Fog(theme.fogColor, 20, 100);
+    
+    // Update background/sky color
+    this.renderer.setClearColor(theme.skyColor || 0x000000);
     
     // Update existing road materials
     this.roadSegments.forEach(segment => {
@@ -143,7 +198,7 @@ export class GameScene {
       if (Math.floor(Math.abs(z) / 4) % 2 === 0) {
         const centerLineGeometry = new THREE.PlaneGeometry(0.05, 1.5);
         const centerLineMaterial = new THREE.MeshBasicMaterial({
-          color: 0xffff00
+          color: theme.secondaryColor
         });
         
         const centerLine = new THREE.Mesh(centerLineGeometry, centerLineMaterial);
